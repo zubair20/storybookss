@@ -13,6 +13,10 @@ const app = express();
 //Use Routes
 app.use('/auth', auth);
 
+app.get('/',(req, res)=>{
+  console.log('it works');
+  
+});
 const port = process.env.PORT || 5000;
 
 app.listen(port, ()=>{
