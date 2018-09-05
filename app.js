@@ -4,6 +4,9 @@ const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const exphbs = require('express-handlebars');
+const path = require('path');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
 
 //Passport config
 require('./config/passport')(passport);
@@ -11,9 +14,19 @@ require('./config/passport')(passport);
 //Load routes
 const index = require('./routes/index');
 const auth = require('./routes/auth');
+const stories = require('./routes/stories');
 
 //Keys config
 const keys = require('./config/keys');
+
+//Handlebars helpers
+const {
+  truncate,
+  stripTags,
+  formatDate,
+  select,
+  editIcon
+} = require('./helpers/hbs');
 
 //MongoDB connect
 mongoose.connect(keys.mongoURI, {useNewUrlParser:true})
@@ -26,8 +39,22 @@ mongoose.connect(keys.mongoURI, {useNewUrlParser:true})
 
 const app = express();
 
+//BodyParser middleware
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.json());
+
+//Methodoverride middleware
+app.use(methodOverride('_method'));
+
 //Handlebars middleware
 app.engine('handlebars', exphbs({
+  helpers: {
+    truncate: truncate,
+    stripTags: stripTags,
+    formatDate: formatDate,
+    select: select,
+    editIcon: editIcon
+  },
   defaultLayout: 'main'
 }));
 app.set('view engine', 'handlebars');
@@ -50,9 +77,14 @@ app.use((req,res, next)=>{
   next();
 });
 
+//Static folder middleware
+app.use(express.static(path.join(__dirname, 'public')));
+
 //Use Routes
-app.use('/auth', auth);
 app.use('/', index);
+app.use('/auth', auth);
+app.use('/stories', stories);
+
 
 const port = process.env.PORT || 5000;
 
